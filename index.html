@@ -1,0 +1,284 @@
+<!-- Colin stepprath -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Steen Papier Schaar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <!-- Game knoppen -->
+    <div id="game">
+        <h1>Computer: <span id="computer">De keuze van de computer komt hier!</span></h1>
+        <h1>Jouw keuze: <span id="human">Maak je keuze!</span></h1>
+        <h1 id="resultContainer">
+            Uitkomst:
+            <span id="resultIndicator" class="indicator"></span>
+            <span id="result">De uitkomst komt hier!</span>
+        </h1>
+
+        <button id="Steen" class="keuze">🪨Steen</button>
+        <button id="Papier" class="keuze">📃Papier</button>
+        <button id="Schaar" class="keuze">✂️Schaar</button>
+
+        <br><br>
+
+        <!-- Knoppen voor moduskeuze -->
+
+        <div id="countdown"></div>
+    </div>
+
+    <div id="scorebord">
+        <h2>Scorebord </h2>
+        <p>Ronde: <span id="ronde">0</span></p>
+        <p>Winst op rij: <span id="winstOpRij">0</span></p>
+        <p>Totaal Gewonnen: <span id="totaalGewonnen">0</span></p>
+    </div>
+
+    <div id="moduskiezer">
+        <button id="startNormaal">Speel Normaal</button>
+        <button id="startWedstrijd">Start Wedstrijdmodus</button>
+    </div>
+<!-- Knoppen voor de thema's -->
+    <div id="themaKiezer" class="thema-container" style="margin-top: 20px;">
+        <h3>Kies een Thema 🎨</h3>
+        <button onclick="zetThema('standaard')">Standaard</button>
+        <button onclick="zetThema('donker')">🌙 Donker</button>
+        <button onclick="zetThema('feest')">🎉 Feest</button>
+        <button onclick="zetThema('retro')">👾 Retro</button>
+    </div>
+<!-- vraagknop -->
+    <div id="vraagknop">
+        <button id="helpKnop" title="Help">?</button>
+    </div>
+
+    <!-- Help Popup -->
+    <div id="helpPopup" class="popup">
+        <div class="popup-content">
+            <span class="close-button" id="closeHelp">&times;</span>
+            <h2>Speluitleg!</h2>
+            <p>
+                Kies <strong>Steen</strong>, <strong>Papier</strong> of <strong>Schaar</strong> om tegen de computer te
+                spelen.<br><br>
+
+                <strong>Wie wint?</strong><br>
+                🪨 Steen verslaat ✂️ Schaar<br>
+                📃 Papier verslaat 🪨 Steen<br>
+                ✂️ Schaar verslaat 📃 Papier<br><br>
+
+                In <strong>wedstrijdmodus</strong> speel je 15 rondes en houd je je score bij.<br><br>
+
+                Veel plezier en succes! 🎮
+            </p>
+        </div>
+    </div>
+    
+<!-- Klik geluid wanneer je de steen, papier, schaar knop indrukt -->
+    <audio id="klikGeluid" src="/geluid/Klik.mp3"></audio>
+    <audio id="eindGeluid" src="/geluid/win.mp3"></audio>
+
+    <script>
+
+        // Popup helpknop
+        const helpKnop = document.getElementById("helpKnop");
+        const helpPopup = document.getElementById("helpPopup");
+        const closeHelp = document.getElementById("closeHelp");
+
+        helpKnop.addEventListener("click", () => {
+            helpPopup.style.display = "block";
+        });
+
+        closeHelp.addEventListener("click", () => {
+            helpPopup.style.display = "none";
+        });
+
+        // Sluit bij klik buiten de popup
+        window.addEventListener("click", (event) => {
+            if (event.target === helpPopup) {
+                helpPopup.style.display = "none";
+            }
+        });
+
+        // Elementreferenties
+        const humanOutput = document.querySelector("#human");
+        const computerOutput = document.querySelector("#computer");
+        const resultOutput = document.querySelector("#result");
+        const rondeOutput = document.querySelector("#ronde");
+        const winstOutput = document.querySelector("#winstOpRij");
+        const countdownOutput = document.querySelector("#countdown");
+        const totaalGewonnenOutput = document.querySelector("#totaalGewonnen");
+
+        //  Keuzemogelijkheden
+        const keuzes = {
+            Steen: "🪨Steen",
+            Schaar: "✂️Schaar",
+            Papier: "📃Papier"
+        };
+
+        //  Statusvariabelen
+        let winstOpRij = 0;
+        let ronde = 0;
+        let wedstrijdActief = false;
+        let normaalActief = true;
+        let totaalGewonnen = 0;
+
+        //  Eventlistener op keuze-knoppen
+        const klikGeluid = document.getElementById("klikGeluid");
+        const eindGeluid = document.getElementById("eindGeluid");
+
+        document.querySelectorAll(".keuze").forEach(button => {
+            button.addEventListener("click", function (event) {
+                if (!wedstrijdActief && !normaalActief) return;
+
+                if (!wedstrijdActief) {
+                    klikGeluid.currentTime = 0;
+                    klikGeluid.play();
+                }
+
+                const humanChoice = keuzes[event.target.id];
+                humanOutput.innerHTML = humanChoice;
+
+                const opties = Object.values(keuzes);
+                const computerChoice = opties[Math.floor(Math.random() * opties.length)];
+                computerOutput.innerHTML = computerChoice;
+
+                const resultaat = Uitkomst(humanChoice, computerChoice);
+                resultOutput.innerHTML = resultaat;
+
+                const indicator = document.getElementById("resultIndicator");
+
+                // Reset kleur
+                indicator.className = "indicator";
+
+                if (resultaat.startsWith(humanChoice)) {
+                    indicator.classList.add("groen");
+                } else if (resultaat.includes("Gelijkspel")) {
+                    indicator.classList.add("oranje");
+                } else {
+                    indicator.classList.add("rood");
+                }
+
+                if (wedstrijdActief) {
+                    ronde++;
+                    rondeOutput.innerText = ronde;
+
+                    // Check of de winnaar de mens is door te checken of resultaat begint met jouw keuze
+                    if (resultaat.startsWith(humanChoice)) {
+                        winstOpRij++;
+                        totaalGewonnen++; // ➕ Tel de winst op
+                        totaalGewonnenOutput.innerText = totaalGewonnen; //  Toon in scorebord
+                        eindGeluid.currentTime = 0;
+                        eindGeluid.play();  // Alleen geluid bij Mens winst
+                    } else if (resultaat.includes("heeft")) {
+                        winstOpRij = 0;  // computer wint of verlies, geen geluid
+                    }
+                    winstOutput.innerText = winstOpRij;
+
+                    if (ronde === 15) {
+                        wedstrijdActief = false;
+                        // Einde wedstrijd 
+                        resultOutput.innerHTML = "<strong>🎉 Wedstrijd voorbij!</strong>";
+                    }
+                }
+            });
+        });
+
+
+
+        //  Uitslag bepalen 
+        function Uitkomst(humanChoice, computerChoice) {
+            if (humanChoice === computerChoice) {
+                return "🟰 Gelijkspel!";
+            }
+
+            switch (humanChoice) {
+                case "🪨Steen":
+                    return (computerChoice === "✂️Schaar") ? `${humanChoice} heeft gewonnen!` : `${computerChoice} heeft gewonnen!`;
+                case "✂️Schaar":
+                    return (computerChoice === "📃Papier") ? `${humanChoice} heeft gewonnen!` : `${computerChoice} heeft gewonnen!`;
+                case "📃Papier":
+                    return (computerChoice === "🪨Steen") ? `${humanChoice} heeft gewonnen!` : `${computerChoice} heeft gewonnen!`;
+                default:
+                    return "Ongeldige keuze.";
+            }
+        }
+
+        //  Start wedstrijdmodus met countdown
+        document.getElementById("startWedstrijd").addEventListener("click", function () {
+            ronde = 0;
+            winstOpRij = 0;
+            rondeOutput.innerText = 0;
+            winstOutput.innerText = 0;
+            wedstrijdActief = false;
+            normaalActief = false;
+            countdownOutput.innerText = "";
+            totaalGewonnen = 0;
+            totaalGewonnenOutput.innerText = 0;
+
+            let teller = 3;
+            countdownOutput.innerText = `Start in ${teller}...`;
+
+            const interval = setInterval(() => {
+                teller--;
+                if (teller > 0) {
+                    countdownOutput.innerText = `Start in ${teller}...`;
+                } else {
+                    clearInterval(interval);
+                    countdownOutput.innerText = "Start!";
+                    wedstrijdActief = true;
+
+                    setTimeout(() => {
+                        countdownOutput.innerText = "";
+                    }, 1000);
+                }
+            }, 1000);
+        });
+
+        // Start normale modus (zonder scorebord)
+        document.getElementById("startNormaal").addEventListener("click", function () {
+            wedstrijdActief = false;
+            normaalActief = true;
+            countdownOutput.innerText = "";
+        });
+
+        function zetThema(keuze) {
+            document.body.classList.remove('donker', 'feest', 'retro');
+            document.getElementById("ballonnen-container").innerHTML = "";
+
+            if (keuze !== 'standaard') {
+                document.body.classList.add(keuze);
+            }
+
+            if (keuze === 'feest') {
+                //  Laat ballonnen verschijnen
+                const interval = setInterval(() => {
+                    const ballon = document.createElement('div');
+                    ballon.classList.add('ballon');
+                    ballon.style.left = Math.random() * 100 + 'vw';
+                    ballon.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 70%)`;
+                    document.getElementById("ballonnen-container").appendChild(ballon);
+
+                    setTimeout(() => ballon.remove(), 6000);
+                }, 800);
+
+                // Sla op zodat we kunnen stoppen als thema verandert
+                document.getElementById("ballonnen-container").dataset.intervalId = interval;
+            } else {
+                // Stop eventuele vorige ballonnen
+                const id = document.getElementById("ballonnen-container").dataset.intervalId;
+                if (id) clearInterval(id);
+            }
+
+            localStorage.setItem('thema', keuze);
+        }
+
+
+    </script>
+    <div id="ballonnen-container"></div>
+</body>
+
+</html>
